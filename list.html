@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Shopping list · Mangio</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="/assets/mangio-mark.jpg">
+<link rel="stylesheet" href="/list.css">
+<script src="/list.js" defer></script>
+</head>
+<body>
+<main class="list-page">
+  <header class="list-top">
+    <a class="brand" href="/" aria-label="Mangio"><img src="/assets/mangio-mark.jpg" alt="" width="28" height="28"><span>mangio</span></a>
+    <span class="live" id="live" hidden data-en="Live" data-it="Live">Live</span>
+  </header>
+
+  <section id="loading" class="state">
+    <p data-en="Opening the list…" data-it="Apro la lista…">Opening the list…</p>
+  </section>
+
+  <section id="expired" class="state" hidden>
+    <h1 data-en="This list link has expired." data-it="Questo link alla lista è scaduto.">This list link has expired.</h1>
+    <p data-en="Ask for a new one." data-it="Chiedine uno nuovo.">Ask for a new one.</p>
+  </section>
+
+  <section id="list" hidden>
+    <h1 id="title"></h1>
+    <p class="progress-text" id="progress-text"></p>
+    <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+    <p class="hint" data-en="Ticks show up in Mangio on the other phone." data-it="Le spunte compaiono in Mangio sull’altro telefono.">Ticks show up in Mangio on the other phone.</p>
+    <div id="zones"></div>
+    <p class="empty" id="empty" hidden data-en="Nothing on the list right now." data-it="Per ora la lista è vuota.">Nothing on the list right now.</p>
+  </section>
+
+  <p class="offline" id="offline" hidden data-en="No connection. Your ticks will be sent when you are back online." data-it="Nessuna connessione. Le spunte verranno inviate appena torni online.">No connection. Your ticks will be sent when you are back online.</p>
+</main>
+<footer class="list-foot">
+  <a href="/"><span data-en="Made with" data-it="Fatto con">Made with</span> <b>mangio</b></a>
+  <div class="languages" aria-label="Language"><button data-lang="en" aria-pressed="true">EN</button><span>/</span><button data-lang="it" aria-pressed="false">IT</button></div>
+</footer>
+</body>
+</html>

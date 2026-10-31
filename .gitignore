@@ -1,0 +1,11 @@
+.DS_Store
+node_modules/
+dist/
+.wrangler/
+work/
+outputs/
+.env
+.env.*
+.dev.vars
+.impeccable/hook.cache.json
+.impeccable/config.local.json

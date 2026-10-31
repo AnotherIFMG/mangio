@@ -20,7 +20,15 @@ Then open `http://localhost:4173`.
 
 ## Cloudflare deployment
 
-The static files are compatible with Cloudflare Pages. Uploading this repository does not configure hosting or connect `mangio.dev`; deployment is a separate step.
+Cloudflare Pages build settings:
+
+- Production branch: `main`
+- Framework preset: `None`
+- Build command: `npm run build`
+- Build output directory: `dist`
+- Root directory: repository root (leave blank)
+
+The build uses Node.js built-ins with no external dependencies and copies only public site files into `dist/`. Hosting and the `mangio.dev` domain are configured separately in Cloudflare.
 
 The waitlist form is currently a design preview. It validates the email format locally, then explicitly reports that nothing was sent or saved. Connect persistent storage before launch.
 

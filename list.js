@@ -130,26 +130,35 @@ function toggle(item) {
   flush();
 }
 
-// Sends unconfirmed ticks; whatever fails stays pending and is retried on
-// the next poll or when the connection comes back.
+// Sends unconfirmed ticks one at a time, in order, so a quick tick and
+// untick can't land on the server the wrong way round. Whatever fails stays
+// pending and is retried on the next poll or when the connection is back.
+let flushing = false;
 async function flush() {
-  for (const [itemId, checked] of [...pending]) {
-    try {
-      const result = await call({ itemId, checked });
-      if (result.expired) {
-        pending.delete(itemId);
-        continue;
+  if (flushing) return;
+  flushing = true;
+  try {
+    while (pending.size) {
+      const [itemId, checked] = pending.entries().next().value;
+      let result;
+      try {
+        result = await call({ itemId, checked });
+      } catch {
+        $("offline").hidden = false;
+        return;
       }
-      const item = list && list.items.find((entry) => entry.id === itemId);
-      if (item) item.checked = checked;
+      if (!result.expired) {
+        const item = list && list.items.find((entry) => entry.id === itemId);
+        if (item) item.checked = checked;
+      }
+      // Re-ticked while the request was out: send the newer value next.
       if (pending.get(itemId) === checked) pending.delete(itemId);
       $("offline").hidden = true;
-    } catch {
-      $("offline").hidden = false;
-      return;
     }
+  } finally {
+    flushing = false;
+    render();
   }
-  render();
 }
 
 async function refresh() {
@@ -165,7 +174,7 @@ async function refresh() {
     $("offline").hidden = pending.size === 0;
     show("list");
     render();
-    if (pending.size) flush();
+    if (pending.size && !flushing) flush();
   } catch {
     if (!list) show("loading");
     $("offline").hidden = false;

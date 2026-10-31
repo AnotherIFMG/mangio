@@ -5,16 +5,20 @@
 
 const ENDPOINT = "https://slhbazaxkfgjozcfhifu.supabase.co/functions/v1/shared-list";
 const POLL_MS = 3000;
+// Same aisles, order and emoji as the List tab in the app (ShoppingAisle).
 const ZONES = [
-  ["produce", "Fruit & veg", "Frutta e verdura"],
-  ["meat_fish", "Meat & fish", "Carne e pesce"],
-  ["dairy", "Dairy", "Latticini"],
-  ["eggs", "Eggs", "Uova"],
-  ["bakery", "Bakery", "Panetteria"],
-  ["pantry", "Pantry", "Dispensa"],
-  ["sauces", "Sauces & spices", "Salse e spezie"],
-  ["household", "Household", "Casa"],
-  ["other", "Other", "Altro"],
+  ["produce", "🥦", "Produce", "Frutta e verdura"],
+  ["dairyEggs", "🥛", "Dairy & Eggs", "Latticini e uova"],
+  ["meatSeafood", "🥩", "Meat & Seafood", "Carne e pesce"],
+  ["bakery", "🥖", "Bakery", "Panetteria"],
+  ["pantry", "🥫", "Pantry & Dry Goods", "Dispensa"],
+  ["sauces", "🧴", "Sauces & Oils", "Salse e oli"],
+  ["spices", "🌶", "Spices & Herbs", "Spezie ed erbe"],
+  ["supplements", "💊", "Supplements", "Integratori"],
+  ["drinks", "🥤", "Drinks", "Bevande"],
+  ["snacks", "🍫", "Snacks", "Snack"],
+  ["household", "🧹", "Household", "Casa"],
+  ["other", "📦", "Other", "Altro"],
 ];
 const TITLES = { "Shopping List": ["Shopping list", "Lista della spesa"] };
 
@@ -72,31 +76,82 @@ function isChecked(item) {
   return pending.has(item.id) ? pending.get(item.id) : item.checked;
 }
 
+function zoneOf(item) {
+  return ZONES.some(([key]) => key === item.storeZone) ? item.storeZone : "other";
+}
+
+function section(id, heading) {
+  const element = document.createElement("section");
+  element.className = "zone";
+  element.id = id;
+  const h2 = document.createElement("h2");
+  h2.textContent = heading;
+  element.append(h2);
+  return element;
+}
+
 function render() {
   if (!list) return;
-  const lang = language === "it" ? 2 : 1;
+  const it = language === "it";
   const titles = TITLES[list.title];
-  $("title").textContent = titles ? titles[lang - 1] : list.title;
+  $("title").textContent = titles ? titles[it ? 1 : 0] : list.title;
 
   const total = list.items.length;
-  const done = list.items.filter(isChecked).length;
-  $("progress-text").textContent = language === "it" ? `${done} di ${total} comprati` : `${done} of ${total} bought`;
-  $("bar").style.width = total ? `${(done / total) * 100}%` : "0";
+  const bought = list.items.filter(isChecked);
+  const toBuy = list.items.filter((item) => !isChecked(item));
+  $("progress-text").textContent = it ? `${bought.length} di ${total} comprati` : `${bought.length} of ${total} bought`;
+  $("bar").style.width = total ? `${(bought.length / total) * 100}%` : "0";
   $("empty").hidden = total > 0;
 
   const zones = $("zones");
+  const chips = $("chips");
   zones.replaceChildren();
-  for (const [key, ...labels] of ZONES) {
-    const items = list.items.filter((item) => (ZONES.some(([k]) => k === item.storeZone) ? item.storeZone : "other") === key);
+  chips.replaceChildren();
+
+  // Like the List tab: what's left to buy, by aisle; bought items sink to
+  // the bottom, newest tick first.
+  const shown = [];
+  for (const [key, emoji, en, itLabel] of ZONES) {
+    const items = toBuy.filter((item) => zoneOf(item) === key);
     if (!items.length) continue;
-    const section = document.createElement("section");
-    section.className = "zone";
-    const heading = document.createElement("h2");
-    heading.textContent = labels[lang - 1];
-    section.append(heading);
-    for (const item of items) section.append(row(item));
-    zones.append(section);
+    const label = it ? itLabel : en;
+    const element = section(`aisle-${key}`, `${emoji}  ${label}`);
+    for (const item of items) element.append(row(item));
+    zones.append(element);
+    shown.push([`aisle-${key}`, label]);
   }
+  if (bought.length) {
+    const label = it ? "Comprato oggi" : "Bought today";
+    const element = section("aisle-bought", label);
+    element.classList.add("bought");
+    for (const item of bought) element.append(row(item));
+    zones.append(element);
+    shown.push(["aisle-bought", label]);
+  }
+
+  // Jump bar, like the chips above the List tab: tap an aisle, land on it.
+  if (shown.length > 1) {
+    chips.append(chip("top", it ? "Tutto" : "All"));
+    for (const [id, label] of shown) chips.append(chip(id, label));
+  }
+  chips.hidden = shown.length <= 1;
+}
+
+let selectedChip = "top";
+function chip(target, label) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "chip";
+  button.textContent = label;
+  button.setAttribute("aria-pressed", String(selectedChip === target));
+  button.addEventListener("click", () => {
+    selectedChip = target;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (target === "top") window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+    else document.getElementById(target)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    $("chips").querySelectorAll(".chip").forEach((el) => el.setAttribute("aria-pressed", String(el === button)));
+  });
+  return button;
 }
 
 function row(item) {

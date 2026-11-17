@@ -57,3 +57,9 @@ Put approved portrait screenshots in `assets/screens/`, then set the `pantry`, `
 ## Attribution
 
 The design audit workflow uses [unslop](https://github.com/heydamir/unslop) by Damir Sokolovsky, licensed under CC BY 4.0.
+
+## Recipe pages and Universal Links
+
+- `/r/<slug>` is rendered by the Pages Function `functions/r/[slug].js`, so Open Graph and the schema.org Recipe are in the HTML without JavaScript. The recipe comes from the `public-recipe` edge function in the app's Supabase; only `published` and `unlisted` rows of `recipe_publications` answer, anything else gets the landing page with a 404.
+- `recipe.js` adds ingredient ticks (this browser only), step timers and "Save to my Cookbook", which opens `mangioai://r/<slug>` (a link to the same site would stay in the browser).
+- `/.well-known/apple-app-site-association` lets the iPhone app (`NX6V99ZFW6.irene.mangio-ai`) open `/r/*`. `/list/*` stays in the browser on purpose.

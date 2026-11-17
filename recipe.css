@@ -1,0 +1,45 @@
+:root{--blue:#204784;--ink:#141820;--muted:#626974;--surface:#f3f5f8;--line:#e4e7ec;--green:#376650;--box:#b9c1cd;--bg:#fff;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--blue:#8fb0e6;--ink:#eef1f5;--muted:#a3abb7;--surface:#1b2029;--line:#2a313c;--green:#5fae86;--box:#5a6472;--bg:#11151b;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+a{color:inherit;text-decoration:none}
+.recipe-page{width:min(560px,100%);margin:0 auto;padding:max(20px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(40px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.top{display:flex;align-items:center;margin-bottom:24px}
+.brand{display:flex;gap:8px;align-items:center}
+.brand img{border-radius:8px}
+.brand span{font-family:Georgia,serif;font-size:24px;letter-spacing:-1px;color:var(--blue)}
+.hero{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;border-radius:20px;margin-bottom:20px;background:var(--surface)}
+h1{margin:0;font-family:Georgia,serif;font-weight:400;font-size:34px;letter-spacing:-1px;line-height:1.1;text-wrap:balance}
+.meta{margin:8px 0 0;font-size:14px;color:var(--muted)}
+.lede{margin:14px 0 0;font-size:16px;line-height:1.5;color:var(--muted)}
+section{margin-top:32px}
+h2{margin:0 0 8px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);font-weight:400}
+.ingredients{list-style:none;margin:0;padding:0}
+.ingredient{display:flex;align-items:center;gap:12px;min-height:52px;padding:10px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.ingredient input{position:absolute;opacity:0;pointer-events:none}
+.ingredient .box{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--box);flex-shrink:0;display:grid;place-items:center;color:#fff;font-size:13px;transition:background .2s,border-color .2s}
+.ingredient input:checked+.box{background:var(--green);border-color:var(--green)}
+.ingredient input:checked+.box:after{content:"✓"}
+.ingredient input:focus-visible+.box{outline:3px solid #6e9fef;outline-offset:2px}
+.ingredient .name{flex:1;font-size:16px;overflow-wrap:anywhere}
+.ingredient .qty{font-size:14px;color:var(--muted);text-align:right;white-space:nowrap}
+.ingredient input:checked~.name{text-decoration:line-through;color:var(--muted)}
+.steps{list-style:none;margin:0;padding:0}
+.step{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+.step-number{width:28px;height:28px;border-radius:50%;background:var(--surface);color:var(--blue);display:grid;place-items:center;font-size:13px;flex-shrink:0}
+.step-body{flex:1;min-width:0}
+.step h3{margin:3px 0 6px;font-size:16px;font-weight:500}
+.step p{margin:0;font-size:16px;line-height:1.5}
+.step .tip{margin-top:8px;font-size:14px;color:var(--muted);font-family:Georgia,serif;font-style:italic}
+.timer{margin-top:10px;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--blue);font-size:14px;font-variant-numeric:tabular-nums}
+.timer:before{content:"";width:8px;height:8px;border-radius:50%;background:var(--box)}
+.timer.running:before{background:var(--blue)}
+.timer.done{border-color:var(--green);color:var(--green)}
+.timer.done:before{background:var(--green)}
+.timer:focus-visible,.save-button:focus-visible{outline:3px solid #6e9fef;outline-offset:3px}
+.save{margin-top:40px;text-align:center;position:sticky;bottom:max(12px,env(safe-area-inset-bottom));padding:16px;border-radius:22px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--line)}
+.save-button{display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:999px;background:var(--blue);color:#fff;font-size:16px}
+.save p{margin:8px 0 0;font-size:13px;color:var(--muted)}
+@media(prefers-color-scheme:dark){.save-button{color:#11151b}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}

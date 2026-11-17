@@ -10,3 +10,7 @@
 /list*
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store
+
+/.well-known/apple-app-site-association
+  Content-Type: application/json
+  Cache-Control: public, max-age=3600

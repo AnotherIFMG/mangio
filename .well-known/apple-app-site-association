@@ -1,0 +1,12 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["NX6V99ZFW6.irene.mangio-ai"],
+        "components": [
+          { "/": "/r/*", "comment": "A published Mangio recipe opens in the app" }
+        ]
+      }
+    ]
+  }
+}

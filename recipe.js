@@ -61,14 +61,14 @@ document.querySelectorAll(".timer").forEach((button) => {
   });
 });
 
-// "Save to my Cookbook": count the tap, then open the recipe in the app.
-// No fallback yet: Safari first asks "Open in Mangio?", and a timer would
-// leave the page while the person is still choosing. Without the app the
-// browser says it cannot open the link (P1: deferred link, App Store).
+// "Save to my Cookbook": a plain link to open.mangio.pages.dev/r/<slug>.
+// The tap itself opens the app (a Universal Link to another host); the
+// script only counts it and never navigates, because a scripted navigation
+// is less reliable at opening the app. Without the app the link loads the
+// same recipe on that host, which says the app is coming: no Safari error.
 const save = document.getElementById("save");
 if (save) {
-  save.addEventListener("click", (event) => {
-    event.preventDefault();
+  save.addEventListener("click", () => {
     const params = new URLSearchParams(location.search);
     const utm = {
       source: params.get("utm_source") || undefined,
@@ -83,6 +83,5 @@ if (save) {
         keepalive: true,
       }).catch(() => {});
     } catch {}
-    location.href = save.getAttribute("href");
   });
 }

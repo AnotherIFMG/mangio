@@ -61,5 +61,8 @@ The design audit workflow uses [unslop](https://github.com/heydamir/unslop) by D
 ## Recipe pages and Universal Links
 
 - `/r/<slug>` is rendered by the Pages Function `functions/r/[slug].js`, so Open Graph and the schema.org Recipe are in the HTML without JavaScript. The recipe comes from the `public-recipe` edge function in the app's Supabase; only `published` and `unlisted` rows of `recipe_publications` answer, anything else gets the landing page with a 404.
-- `recipe.js` adds ingredient ticks (this browser only), step timers and "Save to my Cookbook", which opens `mangioai://r/<slug>` (a link to the same site would stay in the browser).
+- `recipe.js` adds ingredient ticks (this browser only) and step timers, and counts taps on "Save to my Cookbook".
+- "Save to my Cookbook" is a plain link to `https://open.mangio.pages.dev/r/<slug>`. A link to the page's own host stays in Safari (Universal Links rule); a link to another host opens the app when it is installed. Without the app, the same recipe loads on `open.` with "Mangio is coming to the App Store soon" in place of the button, no Safari error.
+- `open.mangio.pages.dev` is the Cloudflare branch alias of the `open` branch. **After every push to `main`, also run `git push origin main:open`**, or the `open.` host serves an old copy.
+- Dish photo: `starter_recipes.image_url` (any public https URL, 1200×630 or larger). It becomes `og:image`, the large preview card and the hero; without it the Mangio mark is the fallback.
 - `/.well-known/apple-app-site-association` lets the iPhone app (`NX6V99ZFW6.irene.mangio-ai`) open `/r/*`. `/list/*` stays in the browser on purpose.

@@ -41,5 +41,6 @@ h2{margin:0 0 8px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;c
 .save{margin-top:40px;text-align:center;position:sticky;bottom:max(12px,env(safe-area-inset-bottom));padding:16px;border-radius:22px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--line)}
 .save-button{display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:999px;background:var(--blue);color:#fff;font-size:16px}
 .save p{margin:8px 0 0;font-size:13px;color:var(--muted)}
+.save .save-title{margin:0;font-size:16px;color:var(--ink,inherit)}
 @media(prefers-color-scheme:dark){.save-button{color:#11151b}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}

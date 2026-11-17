@@ -8,6 +8,11 @@
 const ENDPOINT = "https://slhbazaxkfgjozcfhifu.supabase.co/functions/v1/public-recipe";
 const SITE = "https://mangio.pages.dev";
 const FALLBACK_IMAGE = `${SITE}/assets/mangio-mark.jpg`;
+// "Save to my Cookbook" links here: another host, so iOS hands the tap to
+// the app (a link to the page's own host stays in Safari). Without the app
+// the same recipe loads on this host and says the app is coming, with no
+// Safari error. Served by the `open` branch of this repo (branch alias).
+const OPEN_SITE = "https://open.mangio.pages.dev";
 const SLUG_PATTERN = /^[a-z0-9-]{1,80}$/;
 // Link-preview and search crawlers: they get the page, but are not counted
 // as people opening it.
@@ -26,13 +31,15 @@ export async function onRequestGet({ params, request, env }) {
     if (value) utm[key] = value.slice(0, 128);
   }
   const isBot = BOT_PATTERN.test(request.headers.get("user-agent") || "");
+  // On the open host the person already counted as a view and a save tap.
+  const appMissing = url.hostname.startsWith("open.");
 
   let data;
   try {
     const response = await fetch(ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(isBot ? { slug } : { slug, event: "view", utm }),
+      body: JSON.stringify(isBot || appMissing ? { slug } : { slug, event: "view", utm }),
     });
     if (response.status === 404) return notFound(request, env);
     if (!response.ok) return unavailable();
@@ -41,13 +48,13 @@ export async function onRequestGet({ params, request, env }) {
     return unavailable();
   }
 
-  return new Response(renderPage(data, utm), {
+  return new Response(renderPage(data, utm, { appMissing }), {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "public, max-age=300",
       "X-Content-Type-Options": "nosniff",
       "Referrer-Policy": "strict-origin-when-cross-origin",
-      ...(data.listed ? {} : { "X-Robots-Tag": "noindex" }),
+      ...(data.listed && !appMissing ? {} : { "X-Robots-Tag": "noindex" }),
     },
   });
 }
@@ -153,7 +160,7 @@ function withUTM(base, utm) {
   return query ? `${base}?${query}` : base;
 }
 
-export function renderPage(data, utm = {}) {
+export function renderPage(data, utm = {}, { appMissing = false } = {}) {
   const r = data.recipe;
   const total = (r.time_prep_min || 0) + (r.time_cook_min || 0);
   const ingredients = r.ingredients || [];
@@ -161,9 +168,18 @@ export function renderPage(data, utm = {}) {
   const meta = [`${total} min`, `${ingredients.length} ingredients`, `${r.servings} servings`].join(" · ");
   const image = data.imageURL || FALLBACK_IMAGE;
   const description = r.description_text || meta;
-  // The app opens the same recipe; the scheme, not the https link, because
-  // a link to the same site never leaves the browser (Universal Links rule).
-  const appLink = withUTM(`mangioai://r/${data.slug}`, utm);
+  const appLink = withUTM(`${OPEN_SITE}/r/${data.slug}`, utm);
+  const noindex = !data.listed || appMissing;
+  // Copy approved by Irina 2026-11-17.
+  const saveSection = appMissing
+    ? `<section class="save" id="app-missing">
+    <p class="save-title">Mangio is coming to the App Store soon</p>
+    <p>Everything you need to cook is right here.</p>
+  </section>`
+    : `<section class="save">
+    <a class="save-button" id="save" href="${esc(appLink)}">Save to my Cookbook</a>
+    <p>Keep this recipe in Mangio.</p>
+  </section>`;
 
   const ingredientRows = ingredients.map((i, index) => `
       <li><label class="ingredient"><input type="checkbox" id="ing-${index}"><span class="box" aria-hidden="true"></span><span class="name">${esc(i.name)}</span><span class="qty">${esc(amount(i))}</span></label></li>`).join("");
@@ -190,7 +206,7 @@ export function renderPage(data, utm = {}) {
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>${esc(r.title)} · Mangio</title>
 <meta name="description" content="${esc(description)}">
-${data.listed ? "" : '<meta name="robots" content="noindex">'}
+${noindex ? '<meta name="robots" content="noindex">' : ""}
 <link rel="canonical" href="${esc(data.url)}">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Mangio">
@@ -198,6 +214,7 @@ ${data.listed ? "" : '<meta name="robots" content="noindex">'}
 <meta property="og:description" content="${esc(meta)}. ${esc(description)}">
 <meta property="og:url" content="${esc(data.url)}">
 <meta property="og:image" content="${esc(image)}">
+<meta property="og:image:alt" content="${esc(r.title)}">
 <meta name="twitter:card" content="${data.imageURL ? "summary_large_image" : "summary"}">
 <meta name="twitter:title" content="${esc(r.title)}">
 <meta name="twitter:description" content="${esc(meta)}">
@@ -214,7 +231,7 @@ ${data.listed ? "" : '<meta name="robots" content="noindex">'}
     <a class="brand" href="/" aria-label="Mangio"><img src="/assets/mangio-mark.jpg" alt="" width="28" height="28"><span>mangio</span></a>
   </header>
 
-  ${data.imageURL ? `<img class="hero" src="${esc(data.imageURL)}" alt="" width="1024" height="768">` : ""}
+  ${data.imageURL ? `<img class="hero" src="${esc(data.imageURL)}" alt="${esc(r.title)}" width="1200" height="900">` : ""}
   <h1>${esc(r.title)}</h1>
   <p class="meta">${esc(meta)}</p>
   ${r.description_text ? `<p class="lede">${esc(r.description_text)}</p>` : ""}
@@ -231,10 +248,7 @@ ${data.listed ? "" : '<meta name="robots" content="noindex">'}
     </ol>
   </section>
 
-  <section class="save">
-    <a class="save-button" id="save" href="${esc(appLink)}">Save to my Cookbook</a>
-    <p>Keep this recipe in Mangio.</p>
-  </section>
+  ${saveSection}
 </main>
 </body>
 </html>`;

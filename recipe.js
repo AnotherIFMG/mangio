@@ -62,8 +62,9 @@ document.querySelectorAll(".timer").forEach((button) => {
 });
 
 // "Save to my Cookbook": count the tap, then open the recipe in the app.
-// When the app is not on this phone the page stays, so after a moment the
-// Mangio home page opens instead.
+// No fallback yet: Safari first asks "Open in Mangio?", and a timer would
+// leave the page while the person is still choosing. Without the app the
+// browser says it cannot open the link (P1: deferred link, App Store).
 const save = document.getElementById("save");
 if (save) {
   save.addEventListener("click", (event) => {
@@ -82,14 +83,6 @@ if (save) {
         keepalive: true,
       }).catch(() => {});
     } catch {}
-    const appLink = save.getAttribute("href");
-    let left = false;
-    const onHide = () => { left = true; };
-    document.addEventListener("visibilitychange", onHide, { once: true });
-    window.addEventListener("pagehide", onHide, { once: true });
-    location.href = appLink;
-    setTimeout(() => {
-      if (!left && document.visibilityState === "visible") location.href = "/";
-    }, 1800);
+    location.href = save.getAttribute("href");
   });
 }

@@ -5,7 +5,8 @@
 <title>Shopping list · Mangio</title>
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#EFEDEC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#08080A" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/assets/mangio-mark.jpg">
 <link rel="stylesheet" href="/list.css">
 <script src="/list.js" defer></script>
@@ -27,9 +28,20 @@
   </section>
 
   <section id="list" hidden>
-    <h1 id="title"></h1>
-    <p class="progress-text" id="progress-text"></p>
-    <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+    <div class="title-row">
+      <h1 id="title"></h1>
+      <div class="corner" id="corner" aria-live="polite">
+        <div class="corner-text">
+          <span class="left" id="left"></span>
+          <span class="count" id="count"></span>
+        </div>
+        <svg class="ring" id="ring" viewBox="0 0 52 52" aria-hidden="true">
+          <circle class="ring-track" cx="26" cy="26" r="24"/>
+          <circle class="ring-fill" id="ring-fill" cx="26" cy="26" r="24"/>
+        </svg>
+        <span class="ring-label" id="ring-label" aria-hidden="true"></span>
+      </div>
+    </div>
     <p class="hint" data-en="Ticks show up in Mangio on the other phone." data-it="Le spunte compaiono in Mangio sull’altro telefono.">Ticks show up in Mangio on the other phone.</p>
     <nav class="chips" id="chips" hidden aria-label="Aisles"></nav>
     <div id="zones"></div>

@@ -80,14 +80,102 @@ function zoneOf(item) {
   return ZONES.some(([key]) => key === item.storeZone) ? item.storeZone : "other";
 }
 
-function section(id, heading) {
+const SVG = "http://www.w3.org/2000/svg";
+
+// An aisle opens with the app's capsule: its pastel, a muted glyph, the
+// name in small capitals and how many are left.
+function section(id, key, emoji, heading, count) {
   const element = document.createElement("section");
   element.className = "zone";
   element.id = id;
   const h2 = document.createElement("h2");
-  h2.textContent = heading;
+  h2.className = "aisle";
+  h2.style.background = `var(--${key})`;
+  const glyph = document.createElement("span");
+  glyph.className = "glyph";
+  glyph.setAttribute("aria-hidden", "true");
+  glyph.textContent = emoji;
+  const name = document.createElement("span");
+  name.textContent = heading;
+  const n = document.createElement("span");
+  n.className = "n";
+  n.textContent = String(count);
+  h2.append(glyph, name, n);
   element.append(h2);
   return element;
+}
+
+// "Bought today" in the serif italic, between two hairlines, as in the app.
+function boughtSection(id, heading) {
+  const element = document.createElement("section");
+  element.className = "zone bought";
+  element.id = id;
+  const head = document.createElement("div");
+  head.className = "bought-head";
+  const h2 = document.createElement("h2");
+  h2.textContent = heading;
+  head.append(h2);
+  element.append(head);
+  return element;
+}
+
+// The ring and the handwriting walk from Mangio blue to green as the list
+// empties, like ShoppingProgressRing.
+function hexToRgb(hex) {
+  const value = hex.trim().replace("#", "");
+  return [0, 2, 4].map((i) => parseInt(value.slice(i, i + 2), 16));
+}
+function tint(fraction) {
+  const styles = getComputedStyle(document.documentElement);
+  const from = hexToRgb(styles.getPropertyValue("--blue"));
+  const to = hexToRgb(styles.getPropertyValue("--green"));
+  const t = Math.min(Math.max(fraction, 0), 1);
+  return `rgb(${from.map((c, i) => Math.round(c + (to[i] - c) * t)).join(",")})`;
+}
+
+function renderCorner(boughtCount, total, leftCount) {
+  const it = language === "it";
+  const fraction = total ? boughtCount / total : 0;
+  const color = tint(fraction);
+  const done = total > 0 && boughtCount >= total;
+  $("corner").hidden = total === 0;
+  $("corner").classList.toggle("done", done);
+  $("left").textContent = done ? (it ? "fatto!" : "all done") : (it ? `${leftCount} rimasti` : `${leftCount} left`);
+  $("left").style.color = color;
+  $("count").textContent = `${boughtCount}/${total}`;
+  const fill = $("ring-fill");
+  fill.style.stroke = color;
+  fill.style.opacity = fraction > 0 ? "1" : "0";
+  $("ring-label").textContent = done ? "✓" : `${Math.round(fraction * 100)}%`;
+  $("ring-label").style.color = done ? color : "";
+  drawRingShare(fraction);
+}
+
+// The coloured dashes cover only the bought share of the circle: a second
+// dashed circle, clipped to a pie slice.
+function drawRingShare(fraction) {
+  const ring = $("ring");
+  let clip = ring.querySelector("clipPath");
+  if (!clip) {
+    const defs = document.createElementNS(SVG, "defs");
+    clip = document.createElementNS(SVG, "clipPath");
+    clip.id = "ring-share";
+    const slice = document.createElementNS(SVG, "path");
+    clip.append(slice);
+    defs.append(clip);
+    ring.prepend(defs);
+    $("ring-fill").setAttribute("clip-path", "url(#ring-share)");
+  }
+  const slice = clip.firstChild;
+  if (fraction >= 1) {
+    slice.setAttribute("d", "M0 0H52V52H0Z");
+    return;
+  }
+  const angle = fraction * 2 * Math.PI;
+  const x = 26 + 30 * Math.cos(angle);
+  const y = 26 + 30 * Math.sin(angle);
+  const large = fraction > 0.5 ? 1 : 0;
+  slice.setAttribute("d", fraction <= 0 ? "" : `M26 26 L56 26 A30 30 0 ${large} 1 ${x.toFixed(2)} ${y.toFixed(2)} Z`);
 }
 
 function render() {
@@ -99,8 +187,7 @@ function render() {
   const total = list.items.length;
   const bought = list.items.filter(isChecked);
   const toBuy = list.items.filter((item) => !isChecked(item));
-  $("progress-text").textContent = it ? `${bought.length} di ${total} comprati` : `${bought.length} of ${total} bought`;
-  $("bar").style.width = total ? `${(bought.length / total) * 100}%` : "0";
+  renderCorner(bought.length, total, toBuy.length);
   $("empty").hidden = total > 0;
 
   const zones = $("zones");
@@ -115,15 +202,14 @@ function render() {
     const items = toBuy.filter((item) => zoneOf(item) === key);
     if (!items.length) continue;
     const label = it ? itLabel : en;
-    const element = section(`aisle-${key}`, `${emoji}  ${label}`);
+    const element = section(`aisle-${key}`, key, emoji, label, items.length);
     for (const item of items) element.append(row(item));
     zones.append(element);
     shown.push([`aisle-${key}`, label]);
   }
   if (bought.length) {
     const label = it ? "Comprato oggi" : "Bought today";
-    const element = section("aisle-bought", label);
-    element.classList.add("bought");
+    const element = boughtSection("aisle-bought", label);
     for (const item of bought) element.append(row(item));
     zones.append(element);
     shown.push(["aisle-bought", label]);
@@ -163,10 +249,13 @@ function row(item) {
   const box = document.createElement("span");
   box.className = "box";
   box.setAttribute("aria-hidden", "true");
+  // The app's thin blue circle; ticked, it fills with a white check.
+  box.innerHTML = '<svg viewBox="0 0 22 22"><circle cx="11" cy="11" r="10"/><path d="M6.6 11.3l3 3 5.8-6.2"/></svg>';
   const text = document.createElement("span");
   text.className = "text";
   const name = document.createElement("b");
   name.textContent = item.name;
+  name.append(strike(item.id));
   text.append(name);
   const qty = quantityText(item);
   if (qty) {
@@ -177,6 +266,23 @@ function row(item) {
   button.append(box, text);
   button.addEventListener("click", () => toggle(item));
   return button;
+}
+
+// A pencil line across the name, a little past it, with its own small
+// wobble per item so a list never looks stamped (PenStrikeLine).
+function strike(id) {
+  const bytes = String(id).replace(/[^0-9a-f]/gi, "").padEnd(8, "8");
+  const j = (i) => (parseInt(bytes.slice(i * 2, i * 2 + 2), 16) - 128) / 128;
+  const svg = document.createElementNS(SVG, "svg");
+  svg.setAttribute("class", "strike");
+  svg.setAttribute("viewBox", "0 0 100 8");
+  svg.setAttribute("preserveAspectRatio", "none");
+  svg.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS(SVG, "path");
+  path.setAttribute("d", `M0 ${4 + j(0) * 1.5} C33 ${1.5 + j(1)} 66 ${6 + j(2)} 100 ${3 + j(3) * 1.5}`);
+  path.setAttribute("pathLength", "110");
+  svg.append(path);
+  return svg;
 }
 
 function toggle(item) {
